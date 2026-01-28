@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Syncfusion.DocIO;
-using Syncfusion.DocIO.DLS;
 using Syncfusion.EJ2.DocumentEditor;
+using WDocument = Syncfusion.DocIO.DLS.WordDocument;
+using Syncfusion.DocIO;
 using Newtonsoft.Json;
 using System.IO;
 
@@ -20,8 +20,8 @@ namespace DocumentEditorServer.Controllers
 
         /// <summary>
         /// Import DOCX file and convert to SFDT format
+        /// Reference: https://github.com/SyncfusionExamples/EJ2-Document-Editor-Web-Services
         /// </summary>
-        /// <returns>SFDT JSON string</returns>
         [HttpPost("Import")]
         public IActionResult Import([FromForm] IFormFile file)
         {
@@ -32,30 +32,32 @@ namespace DocumentEditorServer.Controllers
                     return BadRequest(new { error = "No file provided" });
                 }
 
-                _logger.LogInformation("Importing DOCX file: {FileName}, Size: {Size} bytes",
+                _logger.LogInformation("Importing file: {FileName}, Size: {Size} bytes",
                     file.FileName, file.Length);
 
                 using var stream = new MemoryStream();
                 file.CopyTo(stream);
                 stream.Position = 0;
 
-                // Load DOCX using Syncfusion DocIO
-                using var document = new WordDocument(stream, FormatType.Docx);
+                // Determine format type from file extension
+                int index = file.FileName.LastIndexOf('.');
+                string type = index > -1 && index < file.FileName.Length - 1 ?
+                    file.FileName.Substring(index) : ".docx";
 
-                // Convert WordDocument to SFDT using WordDocument extension
-                using var sfdtStream = new MemoryStream();
-                document.Save(sfdtStream, FormatType.Json);
-                sfdtStream.Position = 0;
+                // Load document using Syncfusion.EJ2.DocumentEditor.WordDocument
+                WordDocument document = WordDocument.Load(stream, GetFormatType(type.ToLower()));
 
-                string sfdt = new StreamReader(sfdtStream).ReadToEnd();
+                // Serialize to SFDT JSON
+                string json = JsonConvert.SerializeObject(document);
+                document.Dispose();
 
-                _logger.LogInformation("Successfully converted DOCX to SFDT");
+                _logger.LogInformation("Successfully converted to SFDT");
 
-                return Ok(sfdt);
+                return Ok(json);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to import DOCX file");
+                _logger.LogError(ex, "Failed to import file");
                 return StatusCode(500, new { error = ex.Message });
             }
         }
@@ -73,34 +75,32 @@ namespace DocumentEditorServer.Controllers
                     return BadRequest(new { error = "No content provided" });
                 }
 
-                _logger.LogInformation("Importing DOCX from base64");
+                _logger.LogInformation("Importing from base64");
 
                 var bytes = Convert.FromBase64String(request.Content);
                 using var stream = new MemoryStream(bytes);
 
-                // Load DOCX
-                using var document = new WordDocument(stream, FormatType.Docx);
+                // Load DOCX using Syncfusion.EJ2.DocumentEditor.WordDocument
+                WordDocument document = WordDocument.Load(stream, FormatType.Docx);
 
-                // Convert WordDocument to SFDT using WordDocument extension
-                using var sfdtStream = new MemoryStream();
-                document.Save(sfdtStream, FormatType.Json);
-                sfdtStream.Position = 0;
+                // Serialize to SFDT JSON
+                string json = JsonConvert.SerializeObject(document);
+                document.Dispose();
 
-                string sfdt = new StreamReader(sfdtStream).ReadToEnd();
+                _logger.LogInformation("Successfully converted base64 to SFDT");
 
-                _logger.LogInformation("Successfully converted base64 DOCX to SFDT");
-
-                return Ok(sfdt);
+                return Ok(json);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to import base64 DOCX");
+                _logger.LogError(ex, "Failed to import base64");
                 return StatusCode(500, new { error = ex.Message });
             }
         }
 
         /// <summary>
         /// Export SFDT to DOCX format
+        /// Reference: https://github.com/SyncfusionExamples/EJ2-Document-Editor-Web-Services
         /// </summary>
         [HttpPost("Export")]
         public IActionResult Export([FromBody] SfdtRequest request)
@@ -114,19 +114,15 @@ namespace DocumentEditorServer.Controllers
 
                 _logger.LogInformation("Exporting SFDT to DOCX");
 
-                // Convert SFDT (JSON) to WordDocument using WordDocument.LoadString
-                WordDocument document;
-                using (var sfdtStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(request.Sfdt)))
-                {
-                    document = WordDocument.LoadString(request.Sfdt, FormatType.Json);
-                }
+                // Convert SFDT JSON to WDocument using WordDocument.Save
+                WDocument document = WordDocument.Save(request.Sfdt);
 
                 if (document == null)
                 {
                     return BadRequest(new { error = "Invalid SFDT format" });
                 }
 
-                // Convert to DOCX
+                // Save to stream
                 using var stream = new MemoryStream();
                 document.Save(stream, FormatType.Docx);
                 document.Close();
@@ -143,7 +139,7 @@ namespace DocumentEditorServer.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to export SFDT to DOCX");
+                _logger.LogError(ex, "Failed to export SFDT");
                 return StatusCode(500, new { error = ex.Message });
             }
         }
@@ -163,19 +159,15 @@ namespace DocumentEditorServer.Controllers
 
                 _logger.LogInformation("Exporting SFDT to base64 DOCX");
 
-                // Convert SFDT (JSON) to WordDocument using WordDocument.LoadString
-                WordDocument document;
-                using (var sfdtStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(request.Sfdt)))
-                {
-                    document = WordDocument.LoadString(request.Sfdt, FormatType.Json);
-                }
+                // Convert SFDT JSON to WDocument using WordDocument.Save
+                WDocument document = WordDocument.Save(request.Sfdt);
 
                 if (document == null)
                 {
                     return BadRequest(new { error = "Invalid SFDT format" });
                 }
 
-                // Convert to DOCX
+                // Save to stream
                 using var stream = new MemoryStream();
                 document.Save(stream, FormatType.Docx);
                 document.Close();
@@ -189,8 +181,37 @@ namespace DocumentEditorServer.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to export SFDT to base64 DOCX");
+                _logger.LogError(ex, "Failed to export SFDT to base64");
                 return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Helper method to get FormatType from file extension
+        /// </summary>
+        private FormatType GetFormatType(string format)
+        {
+            if (string.IsNullOrEmpty(format))
+                throw new NotSupportedException("File format not supported.");
+
+            switch (format.ToLower())
+            {
+                case ".dotx":
+                case ".docx":
+                case ".docm":
+                case ".dotm":
+                    return FormatType.Docx;
+                case ".dot":
+                case ".doc":
+                    return FormatType.Doc;
+                case ".rtf":
+                    return FormatType.Rtf;
+                case ".txt":
+                    return FormatType.Txt;
+                case ".xml":
+                    return FormatType.WordML;
+                default:
+                    throw new NotSupportedException("File format not supported.");
             }
         }
     }
