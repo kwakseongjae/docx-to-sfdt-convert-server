@@ -41,9 +41,8 @@ namespace DocumentEditorServer.Controllers
                 // Load DOCX using Syncfusion DocIO
                 using var document = new WordDocument(stream, FormatType.Docx);
 
-                // Convert to SFDT
-                stream.Position = 0;
-                string sfdt = Syncfusion.DocIO.DLS.WordDocument.Save(document, FormatType.Docx);
+                // Convert WordDocument to SFDT (JSON serialization)
+                string sfdt = JsonConvert.SerializeObject(document);
 
                 _logger.LogInformation("Successfully converted DOCX to SFDT");
 
@@ -77,9 +76,8 @@ namespace DocumentEditorServer.Controllers
                 // Load DOCX
                 using var document = new WordDocument(stream, FormatType.Docx);
 
-                // Convert to SFDT
-                stream.Position = 0;
-                string sfdt = Syncfusion.DocIO.DLS.WordDocument.Save(document, FormatType.Docx);
+                // Convert WordDocument to SFDT (JSON serialization)
+                string sfdt = JsonConvert.SerializeObject(document);
 
                 _logger.LogInformation("Successfully converted base64 DOCX to SFDT");
 
@@ -107,7 +105,7 @@ namespace DocumentEditorServer.Controllers
 
                 _logger.LogInformation("Exporting SFDT to DOCX");
 
-                // Deserialize SFDT to WordDocument
+                // Deserialize SFDT (JSON) to WordDocument
                 var document = JsonConvert.DeserializeObject<WordDocument>(request.Sfdt);
 
                 if (document == null)
@@ -118,6 +116,7 @@ namespace DocumentEditorServer.Controllers
                 // Convert to DOCX
                 using var stream = new MemoryStream();
                 document.Save(stream, FormatType.Docx);
+                document.Close();
                 stream.Position = 0;
 
                 _logger.LogInformation("Successfully converted SFDT to DOCX");
@@ -151,7 +150,7 @@ namespace DocumentEditorServer.Controllers
 
                 _logger.LogInformation("Exporting SFDT to base64 DOCX");
 
-                // Deserialize SFDT to WordDocument
+                // Deserialize SFDT (JSON) to WordDocument
                 var document = JsonConvert.DeserializeObject<WordDocument>(request.Sfdt);
 
                 if (document == null)
@@ -162,6 +161,7 @@ namespace DocumentEditorServer.Controllers
                 // Convert to DOCX
                 using var stream = new MemoryStream();
                 document.Save(stream, FormatType.Docx);
+                document.Close();
                 stream.Position = 0;
 
                 var base64 = Convert.ToBase64String(stream.ToArray());
