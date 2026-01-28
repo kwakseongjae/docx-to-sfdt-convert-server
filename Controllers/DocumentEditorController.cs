@@ -81,7 +81,7 @@ namespace DocumentEditorServer.Controllers
                 using var stream = new MemoryStream(bytes);
 
                 // Load DOCX using Syncfusion.EJ2.DocumentEditor.WordDocument
-                WordDocument document = WordDocument.Load(stream, FormatType.Docx);
+                WordDocument document = WordDocument.Load(stream, Syncfusion.EJ2.DocumentEditor.FormatType.Docx);
 
                 // Serialize to SFDT JSON
                 string json = JsonConvert.SerializeObject(document);
@@ -124,7 +124,7 @@ namespace DocumentEditorServer.Controllers
 
                 // Save to stream
                 using var stream = new MemoryStream();
-                document.Save(stream, FormatType.Docx);
+                document.Save(stream, Syncfusion.DocIO.FormatType.Docx);
                 document.Close();
                 stream.Position = 0;
 
@@ -169,7 +169,7 @@ namespace DocumentEditorServer.Controllers
 
                 // Save to stream
                 using var stream = new MemoryStream();
-                document.Save(stream, FormatType.Docx);
+                document.Save(stream, Syncfusion.DocIO.FormatType.Docx);
                 document.Close();
                 stream.Position = 0;
 
@@ -189,7 +189,7 @@ namespace DocumentEditorServer.Controllers
         /// <summary>
         /// Helper method to get FormatType from file extension
         /// </summary>
-        private FormatType GetFormatType(string format)
+        private Syncfusion.EJ2.DocumentEditor.FormatType GetFormatType(string format)
         {
             if (string.IsNullOrEmpty(format))
                 throw new NotSupportedException("File format not supported.");
@@ -200,16 +200,16 @@ namespace DocumentEditorServer.Controllers
                 case ".docx":
                 case ".docm":
                 case ".dotm":
-                    return FormatType.Docx;
+                    return Syncfusion.EJ2.DocumentEditor.FormatType.Docx;
                 case ".dot":
                 case ".doc":
-                    return FormatType.Doc;
+                    return Syncfusion.EJ2.DocumentEditor.FormatType.Doc;
                 case ".rtf":
-                    return FormatType.Rtf;
+                    return Syncfusion.EJ2.DocumentEditor.FormatType.Rtf;
                 case ".txt":
-                    return FormatType.Txt;
+                    return Syncfusion.EJ2.DocumentEditor.FormatType.Txt;
                 case ".xml":
-                    return FormatType.WordML;
+                    return Syncfusion.EJ2.DocumentEditor.FormatType.WordML;
                 default:
                     throw new NotSupportedException("File format not supported.");
             }
