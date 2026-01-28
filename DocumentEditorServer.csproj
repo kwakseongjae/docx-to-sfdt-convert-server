@@ -7,11 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Syncfusion EJ2 WordProcessor for DocumentEditor (includes SFDT support) -->
-    <PackageReference Include="Syncfusion.EJ2.WordProcessor.AspNet.Core" Version="27.1.48" />
-
-    <!-- Syncfusion DocIO for DOCX processing -->
-    <PackageReference Include="Syncfusion.DocIO.Net.Core" Version="27.1.48" />
+    <!-- Syncfusion EJ2 WordEditor for DocumentEditor (includes SFDT support) -->
+    <PackageReference Include="Syncfusion.EJ2.WordEditor.AspNet.Core" Version="27.1.48" />
 
     <!-- For JSON serialization -->
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
