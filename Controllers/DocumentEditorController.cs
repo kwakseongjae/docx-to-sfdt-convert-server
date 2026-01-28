@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Syncfusion.EJ2.DocumentEditor;
 using WDocument = Syncfusion.DocIO.DLS.WordDocument;
 using Syncfusion.DocIO;
+using Syncfusion.DocIORenderer;
 using Newtonsoft.Json;
 using System.IO;
 
@@ -184,6 +185,65 @@ namespace DocumentEditorServer.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to export SFDT to base64");
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Export SFDT to PDF format
+        /// Reference: https://help.syncfusion.com/file-formats/docio/word-to-pdf
+        /// </summary>
+        [HttpPost("ExportPdf")]
+        public IActionResult ExportPdf([FromBody] SfdtRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(request.Sfdt))
+                {
+                    return BadRequest(new { error = "No SFDT content provided" });
+                }
+
+                _logger.LogInformation("Exporting SFDT to PDF");
+
+                // Convert SFDT JSON to WDocument using WordDocument.Save
+                WDocument document = WordDocument.Save(request.Sfdt);
+
+                if (document == null)
+                {
+                    return BadRequest(new { error = "Invalid SFDT format" });
+                }
+
+                // Convert to PDF using DocIORenderer
+                using var renderer = new DocIORenderer();
+                using var pdfDocument = renderer.ConvertToPDF(document);
+                using var stream = new MemoryStream();
+
+                pdfDocument.Save(stream);
+                document.Close();
+                stream.Position = 0;
+
+                _logger.LogInformation("Successfully converted SFDT to PDF");
+
+                var fileName = request.FileName ?? "document.pdf";
+                // Remove .docx extension if present and add .pdf
+                if (fileName.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
+                {
+                    fileName = fileName.Substring(0, fileName.Length - 5) + ".pdf";
+                }
+                else if (!fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                {
+                    fileName += ".pdf";
+                }
+
+                return File(
+                    stream.ToArray(),
+                    "application/pdf",
+                    fileName
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to export SFDT to PDF");
                 return StatusCode(500, new { error = ex.Message });
             }
         }

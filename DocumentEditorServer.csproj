@@ -10,6 +10,9 @@
     <!-- Syncfusion EJ2 WordEditor for DocumentEditor (includes SFDT support) -->
     <PackageReference Include="Syncfusion.EJ2.WordEditor.AspNet.Core" Version="27.1.48" />
 
+    <!-- For PDF conversion (DOCX/SFDT → PDF) -->
+    <PackageReference Include="Syncfusion.DocIORenderer.Net.Core" Version="27.1.48" />
+
     <!-- For JSON serialization -->
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 
