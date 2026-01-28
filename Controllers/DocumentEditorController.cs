@@ -23,19 +23,21 @@ namespace DocumentEditorServer.Controllers
         /// Reference: https://github.com/SyncfusionExamples/EJ2-Document-Editor-Web-Services
         /// </summary>
         [HttpPost("Import")]
-        public IActionResult Import([FromForm] IFormFile file)
+        public string Import(IFormCollection data)
         {
             try
             {
-                if (file == null || file.Length == 0)
+                if (data.Files.Count == 0)
                 {
-                    return BadRequest(new { error = "No file provided" });
+                    throw new Exception("No file provided");
                 }
+
+                Stream stream = new MemoryStream();
+                IFormFile file = data.Files[0];
 
                 _logger.LogInformation("Importing file: {FileName}, Size: {Size} bytes",
                     file.FileName, file.Length);
 
-                using var stream = new MemoryStream();
                 file.CopyTo(stream);
                 stream.Position = 0;
 
@@ -53,12 +55,12 @@ namespace DocumentEditorServer.Controllers
 
                 _logger.LogInformation("Successfully converted to SFDT");
 
-                return Ok(json);
+                return json;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to import file");
-                return StatusCode(500, new { error = ex.Message });
+                throw;
             }
         }
 
