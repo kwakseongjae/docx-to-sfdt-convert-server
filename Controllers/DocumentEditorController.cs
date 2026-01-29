@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Syncfusion.EJ2.DocumentEditor;
 using WDocument = Syncfusion.DocIO.DLS.WordDocument;
 using Syncfusion.DocIO;
+using Syncfusion.DocIO.DLS;
 using Syncfusion.DocIORenderer;
 using Newtonsoft.Json;
 using System.IO;
@@ -217,7 +218,7 @@ namespace DocumentEditorServer.Controllers
 
                 // Configure fallback fonts for Korean text
                 // Priority: Nanum Gothic > Noto Sans CJK KR > UnDotum > Batang
-                document.FontSettings.FallbackFonts.Add(Syncfusion.DocIO.ScriptType.Korean,
+                document.FontSettings.FallbackFonts.Add(ScriptType.Korean,
                     "Nanum Gothic, NanumGothic, Noto Sans CJK KR, UnDotum, Batang");
 
                 _logger.LogInformation("   ✅ Step 1/4: WordDocument created with Korean font fallbacks");
