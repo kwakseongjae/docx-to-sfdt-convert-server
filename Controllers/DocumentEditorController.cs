@@ -4,6 +4,7 @@ using WDocument = Syncfusion.DocIO.DLS.WordDocument;
 using Syncfusion.DocIO;
 using Syncfusion.DocIO.DLS;
 using Syncfusion.DocIORenderer;
+using Syncfusion.Office;
 using Newtonsoft.Json;
 using System.IO;
 
@@ -49,11 +50,14 @@ namespace DocumentEditorServer.Controllers
                     file.FileName.Substring(index) : ".docx";
 
                 // Load document using Syncfusion.EJ2.DocumentEditor.WordDocument
-                WordDocument document = WordDocument.Load(stream, GetFormatType(type.ToLower()));
+                Syncfusion.EJ2.DocumentEditor.WordDocument document = Syncfusion.EJ2.DocumentEditor.WordDocument.Load(stream, GetFormatType(type.ToLower()));
 
                 // Serialize to SFDT JSON
                 string json = JsonConvert.SerializeObject(document);
                 document.Dispose();
+
+                // Fix table row height types to prevent infinite height increase bug
+                json = FixTableRowHeightTypes(json);
 
                 _logger.LogInformation("Successfully converted to SFDT");
 
@@ -85,11 +89,14 @@ namespace DocumentEditorServer.Controllers
                 using var stream = new MemoryStream(bytes);
 
                 // Load DOCX using Syncfusion.EJ2.DocumentEditor.WordDocument
-                WordDocument document = WordDocument.Load(stream, Syncfusion.EJ2.DocumentEditor.FormatType.Docx);
+                Syncfusion.EJ2.DocumentEditor.WordDocument document = Syncfusion.EJ2.DocumentEditor.WordDocument.Load(stream, Syncfusion.EJ2.DocumentEditor.FormatType.Docx);
 
                 // Serialize to SFDT JSON
                 string json = JsonConvert.SerializeObject(document);
                 document.Dispose();
+
+                // Fix table row height types to prevent infinite height increase bug
+                json = FixTableRowHeightTypes(json);
 
                 _logger.LogInformation("Successfully converted base64 to SFDT");
 
@@ -119,7 +126,7 @@ namespace DocumentEditorServer.Controllers
                 _logger.LogInformation("Exporting SFDT to DOCX");
 
                 // Convert SFDT JSON to WDocument using WordDocument.Save
-                WDocument document = WordDocument.Save(request.Sfdt);
+                WDocument document = Syncfusion.EJ2.DocumentEditor.WordDocument.Save(request.Sfdt);
 
                 if (document == null)
                 {
@@ -164,7 +171,7 @@ namespace DocumentEditorServer.Controllers
                 _logger.LogInformation("Exporting SFDT to base64 DOCX");
 
                 // Convert SFDT JSON to WDocument using WordDocument.Save
-                WDocument document = WordDocument.Save(request.Sfdt);
+                WDocument document = Syncfusion.EJ2.DocumentEditor.WordDocument.Save(request.Sfdt);
 
                 if (document == null)
                 {
@@ -208,7 +215,7 @@ namespace DocumentEditorServer.Controllers
 
                 // Convert SFDT JSON to WDocument using WordDocument.Save
                 _logger.LogInformation("   Step 1/4: Converting SFDT to WordDocument");
-                WDocument document = WordDocument.Save(request.Sfdt);
+                WDocument document = Syncfusion.EJ2.DocumentEditor.WordDocument.Save(request.Sfdt);
 
                 if (document == null)
                 {
@@ -291,6 +298,78 @@ namespace DocumentEditorServer.Controllers
                     return Syncfusion.EJ2.DocumentEditor.FormatType.WordML;
                 default:
                     throw new NotSupportedException("File format not supported.");
+            }
+        }
+
+        /// <summary>
+        /// Fix table row height types in SFDT JSON to prevent infinite height increase bug
+        /// Changes all "AtLeast" heightType to "Exactly" to allow proper row resizing
+        /// </summary>
+        private string FixTableRowHeightTypes(string sfdtJson)
+        {
+            try
+            {
+                _logger.LogInformation("🔧 Fixing table row height types...");
+
+                var sfdt = Newtonsoft.Json.Linq.JObject.Parse(sfdtJson);
+                int fixCount = 0;
+
+                // Recursively fix all table rows
+                FixRowHeightsRecursive(sfdt, ref fixCount);
+
+                _logger.LogInformation($"✅ Fixed {fixCount} table rows");
+
+                return sfdt.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "⚠️ Could not fix table heights, returning original SFDT");
+                return sfdtJson;
+            }
+        }
+
+        /// <summary>
+        /// Recursively traverse SFDT JSON and fix all table row height types
+        /// </summary>
+        private void FixRowHeightsRecursive(Newtonsoft.Json.Linq.JToken token, ref int fixCount)
+        {
+            if (token is Newtonsoft.Json.Linq.JObject obj)
+            {
+                // Check if this is a table row with rowFormat
+                if (obj["rows"] != null)
+                {
+                    var rows = obj["rows"] as Newtonsoft.Json.Linq.JArray;
+                    if (rows != null)
+                    {
+                        foreach (var row in rows)
+                        {
+                            var rowFormat = row["rowFormat"];
+                            if (rowFormat != null && rowFormat["heightType"] != null)
+                            {
+                                var heightType = rowFormat["heightType"]?.ToString();
+                                if (heightType == "AtLeast")
+                                {
+                                    rowFormat["heightType"] = "Exactly";
+                                    fixCount++;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Recursively process all properties
+                foreach (var property in obj.Properties())
+                {
+                    FixRowHeightsRecursive(property.Value, ref fixCount);
+                }
+            }
+            else if (token is Newtonsoft.Json.Linq.JArray array)
+            {
+                // Recursively process array items
+                foreach (var item in array)
+                {
+                    FixRowHeightsRecursive(item, ref fixCount);
+                }
             }
         }
     }
