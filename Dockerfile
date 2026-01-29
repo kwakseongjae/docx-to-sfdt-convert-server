@@ -15,6 +15,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
 # Install native libraries required for SkiaSharp and DocIORenderer PDF conversion
+# Also install Korean/CJK fonts for proper text rendering
 RUN apt-get update && apt-get install -y \
     libfontconfig1 \
     libfreetype6 \
@@ -22,6 +23,9 @@ RUN apt-get update && apt-get install -y \
     libjpeg62-turbo \
     libpng16-16 \
     libicu-dev \
+    fonts-noto-cjk \
+    fontconfig \
+    && fc-cache -fv \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy built application

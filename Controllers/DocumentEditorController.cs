@@ -217,8 +217,11 @@ namespace DocumentEditorServer.Controllers
                 _logger.LogInformation("   ✅ Step 1/4: WordDocument created");
 
                 // Convert to PDF using DocIORenderer
-                _logger.LogInformation("   Step 2/4: Creating DocIORenderer");
+                _logger.LogInformation("   Step 2/4: Creating DocIORenderer with Korean font support");
                 using var renderer = new DocIORenderer();
+
+                // Enable AutoDetectComplexScript for CJK (Korean, Chinese, Japanese) language support
+                renderer.Settings.AutoDetectComplexScript = true;
 
                 _logger.LogInformation("   Step 3/4: Converting WordDocument to PDF (this uses Syncfusion license)");
                 using var pdfDocument = renderer.ConvertToPDF(document);
