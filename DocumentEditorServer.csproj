@@ -8,14 +8,14 @@
 
   <ItemGroup>
     <!-- Syncfusion EJ2 WordEditor for DocumentEditor (includes SFDT support) -->
-    <PackageReference Include="Syncfusion.EJ2.WordEditor.AspNet.Core" Version="27.1.48" />
+    <PackageReference Include="Syncfusion.EJ2.WordEditor.AspNet.Core" Version="32.1.24" />
 
     <!-- For PDF conversion (DOCX/SFDT → PDF) -->
-    <PackageReference Include="Syncfusion.DocIORenderer.Net.Core" Version="27.1.48" />
+    <PackageReference Include="Syncfusion.DocIORenderer.Net.Core" Version="32.1.24" />
 
     <!-- SkiaSharp Linux native assets (required for Railway/Linux deployment) -->
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.8" />
-    <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" Version="7.3.0.2" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.116.1" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" Version="8.3.0.1" />
 
     <!-- For JSON serialization -->
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
