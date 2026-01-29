@@ -14,6 +14,16 @@ RUN dotnet publish -c Release -o out
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
+# Install native libraries required for SkiaSharp and DocIORenderer PDF conversion
+RUN apt-get update && apt-get install -y \
+    libfontconfig1 \
+    libfreetype6 \
+    libharfbuzz0b \
+    libjpeg62-turbo \
+    libpng16-16 \
+    libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy built application
 COPY --from=build /app/out .
 
