@@ -24,6 +24,9 @@ RUN apt-get update && apt-get install -y \
     libpng16-16 \
     libicu-dev \
     fonts-noto-cjk \
+    fonts-noto-cjk-extra \
+    fonts-unfonts-core \
+    fonts-nanum \
     fontconfig \
     && fc-cache -fv \
     && rm -rf /var/lib/apt/lists/*
