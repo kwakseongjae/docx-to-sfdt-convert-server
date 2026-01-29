@@ -5,20 +5,6 @@ using Syncfusion.Licensing;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Register Syncfusion License
-// Priority: Environment Variable > appsettings.json
-var syncfusionLicense = Environment.GetEnvironmentVariable("SYNCFUSION_LICENSE_KEY")
-    ?? builder.Configuration["Syncfusion:LicenseKey"];
-
-if (!string.IsNullOrEmpty(syncfusionLicense))
-{
-    SyncfusionLicenseProvider.RegisterLicense(syncfusionLicense);
-}
-else
-{
-    Console.WriteLine("⚠️  WARNING: Syncfusion license key not found!");
-}
-
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -40,6 +26,21 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Register Syncfusion License (MUST be after builder.Build())
+// Priority: Environment Variable > appsettings.json
+var syncfusionLicense = Environment.GetEnvironmentVariable("SYNCFUSION_LICENSE_KEY")
+    ?? builder.Configuration["Syncfusion:LicenseKey"];
+
+if (!string.IsNullOrEmpty(syncfusionLicense))
+{
+    SyncfusionLicenseProvider.RegisterLicense(syncfusionLicense);
+    Console.WriteLine("✅ Syncfusion license registered successfully");
+}
+else
+{
+    Console.WriteLine("⚠️  WARNING: Syncfusion license key not found!");
+}
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
