@@ -203,26 +203,33 @@ namespace DocumentEditorServer.Controllers
                     return BadRequest(new { error = "No SFDT content provided" });
                 }
 
-                _logger.LogInformation("Exporting SFDT to PDF");
+                _logger.LogInformation("🔄 Starting PDF export from SFDT");
 
                 // Convert SFDT JSON to WDocument using WordDocument.Save
+                _logger.LogInformation("   Step 1/4: Converting SFDT to WordDocument");
                 WDocument document = WordDocument.Save(request.Sfdt);
 
                 if (document == null)
                 {
+                    _logger.LogError("   ❌ Failed: Invalid SFDT format");
                     return BadRequest(new { error = "Invalid SFDT format" });
                 }
+                _logger.LogInformation("   ✅ Step 1/4: WordDocument created");
 
                 // Convert to PDF using DocIORenderer
+                _logger.LogInformation("   Step 2/4: Creating DocIORenderer");
                 using var renderer = new DocIORenderer();
+
+                _logger.LogInformation("   Step 3/4: Converting WordDocument to PDF (this uses Syncfusion license)");
                 using var pdfDocument = renderer.ConvertToPDF(document);
                 using var stream = new MemoryStream();
 
+                _logger.LogInformation("   Step 4/4: Saving PDF to stream");
                 pdfDocument.Save(stream);
                 document.Close();
                 stream.Position = 0;
 
-                _logger.LogInformation("Successfully converted SFDT to PDF");
+                _logger.LogInformation($"✅ Successfully converted SFDT to PDF (Size: {stream.Length} bytes)");
 
                 var fileName = request.FileName ?? "document.pdf";
                 // Remove .docx extension if present and add .pdf

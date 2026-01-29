@@ -29,13 +29,20 @@ var app = builder.Build();
 
 // Register Syncfusion License (MUST be after builder.Build())
 // Priority: Environment Variable > appsettings.json
-var syncfusionLicense = Environment.GetEnvironmentVariable("SYNCFUSION_LICENSE_KEY")
-    ?? builder.Configuration["Syncfusion:LicenseKey"];
+var envLicense = Environment.GetEnvironmentVariable("SYNCFUSION_LICENSE_KEY");
+var configLicense = builder.Configuration["Syncfusion:LicenseKey"];
+var syncfusionLicense = envLicense ?? configLicense;
+
+Console.WriteLine("📋 License Key Source Check:");
+Console.WriteLine($"   - Environment Variable: {(envLicense != null ? $"Found ({envLicense.Substring(0, 20)}...)" : "Not found")}");
+Console.WriteLine($"   - appsettings.json: {(configLicense != null ? $"Found ({configLicense.Substring(0, 20)}...)" : "Not found")}");
+Console.WriteLine($"   - Using: {(envLicense != null ? "Environment Variable" : configLicense != null ? "appsettings.json" : "NONE")}");
 
 if (!string.IsNullOrEmpty(syncfusionLicense))
 {
     SyncfusionLicenseProvider.RegisterLicense(syncfusionLicense);
-    Console.WriteLine("✅ Syncfusion license registered successfully");
+    Console.WriteLine($"✅ Syncfusion license registered successfully (Length: {syncfusionLicense.Length} chars)");
+    Console.WriteLine($"   Key preview: {syncfusionLicense.Substring(0, Math.Min(30, syncfusionLicense.Length))}...");
 }
 else
 {
